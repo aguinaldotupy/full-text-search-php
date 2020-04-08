@@ -13,7 +13,9 @@ class FullTextSearchServiceProvider extends ServiceProvider
      */
     public function register()
     {
-        //
+        $this->app->singleton('fulltextsearch', function () {
+            return new FullTextSearch();
+        });
     }
 
     /**

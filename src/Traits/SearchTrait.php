@@ -2,11 +2,16 @@
 
 namespace Tupy\Search\Traits;
 
-trait FullTextSearch
+/**
+ * Trait FullTextSearch
+ * @package Tupy\Search\Traits
+ * @mixin static \Illuminate\Database\Eloquent\Builder fullTextSearch($term)
+ */
+trait SearchTrait
 {
 	//In progress
 
-
+    private $searchable = [];
     /**
      * Replaces spaces with full text search wildcards
      *
@@ -18,9 +23,9 @@ trait FullTextSearch
         // removing symbols used by MySQL
         $reservedSymbols = ['-', '+', '<', '>', '@', '(', ')', '~'];
         $term = str_replace($reservedSymbols, '', $term);
- 
+
         $words = explode(' ', $term);
- 
+
         foreach($words as $key => $word) {
             /*
              * applying + operator (required word) only big words
@@ -30,12 +35,10 @@ trait FullTextSearch
                 $words[$key] = '+' . $word . '*';
             }
         }
- 
-        $searchTerm = implode(' ', $words);
- 
-        return $searchTerm;
+
+        return implode(' ', $words);
     }
- 
+
     /**
      * Scope a query that matches a full text search of term.
      *
@@ -43,24 +46,24 @@ trait FullTextSearch
      * @param string $term
      * @return \Illuminate\Database\Eloquent\Builder
      */
-    public function scopeSearch($query, $term)
+    public function scopeFullTextSearch($query, $term)
     {
     	//In progress return score search
         // dd($term);
         // $columns = implode(',',$this->searchable);
- 
+
         // $searchableTerm = $this->fullTextWildcards($term);
         // dd($searchableTerm);
-     
+
         // return $query->selectRaw("MATCH ({$columns}) AGAINST (? IN BOOLEAN MODE) AS relevance_score", [$searchableTerm])
         // ->whereRaw("MATCH ({$columns}) AGAINST (? IN BOOLEAN MODE)", $searchableTerm)
         // ->orderByDesc('relevance_score');
 
 
         $columns = implode(',',$this->searchable);
- 
-        $query->whereRaw("MATCH ({$columns}) AGAINST (? IN BOOLEAN MODE)" , $this->fullTextWildcards($term));
- 
-        return $query;
+
+        return $query->where(function (Builder $queryFullText) use ($columns, $term) {
+            $queryFullText->whereRaw("MATCH ({$columns}) AGAINST (? IN BOOLEAN MODE)", $this->fullTextWildcards($term));
+        });
     }
 }
